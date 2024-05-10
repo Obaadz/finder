@@ -169,6 +169,7 @@ export const addFoundPerson = asyncHandler(async (req, res, next) => {
   }
 });
 export const checkFaceMissingPerson = asyncHandler(async (req, res, next) => {
+  console.log(req.files);
   const File1 = req.files.File1.tempFilePath;
   if (!req.files.File1) return next(new Error("Please upload file."));
   let result = await getDescriptorsFromDB(File1);
