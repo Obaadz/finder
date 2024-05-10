@@ -180,19 +180,23 @@ export const checkFaceMissingPerson = asyncHandler(async (req, res, next) => {
     sharpImg.rotate(180).toBuffer(),
     sharpImg.rotate(270).toBuffer(),
   ]);
-  let results = await Promise.all([
+  const results = await Promise.all([
     getDescriptorsFromDB(File1),
     getDescriptorsFromDB(otherFiles[0]),
     getDescriptorsFromDB(otherFiles[1]),
     getDescriptorsFromDB(otherFiles[2]),
   ]);
-  const searchKeys = results.map((result) => result[0]?._label);
-
+  const searchKeys = results.map((result) => result[0]?.label);
+  console.debug("RESULTS:", results);
+  console.debug("SEARCH KEYS:", searchKeys);
   if (searchKeys.every((key) => key === "unknown"))
     return res.json({ success: false, result, missingData: "unknown" });
 
   const searchKey = searchKeys.find((key) => key !== "unknown");
-  const result = results.find((result) => result[0]?._label !== "unknown");
+  const result = results.find((result) => result[0]?.label !== "unknown");
+
+  console.log(searchKey);
+  console.log(result);
 
   const reportMissing = await reportMissingPersonsrModel.findOne({
     labelFaceModel: searchKey,
