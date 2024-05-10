@@ -63,7 +63,7 @@ async function getDescriptorsFromDB(image) {
   }
 
   // Load face matcher to find the matching face
-  const faceMatcher = new faceapi.FaceMatcher(faces, 0.6);
+  const faceMatcher = new faceapi.FaceMatcher(faces, Number(process.env.PERCENTAGE || 0.75));
 
   // Read the image using canvas or other method
   const img = await canvas.loadImage(image);
