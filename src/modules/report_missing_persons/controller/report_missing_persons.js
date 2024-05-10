@@ -190,7 +190,7 @@ export const checkFaceMissingPerson = asyncHandler(async (req, res, next) => {
   console.debug("RESULTS:", results);
   console.debug("SEARCH KEYS:", searchKeys);
   if (searchKeys.every((key) => key === "unknown"))
-    return res.json({ success: false, result, missingData: "unknown" });
+    return res.json({ success: false, result: results[0], missingData: "unknown" });
 
   const searchKey = searchKeys.find((key) => key !== "unknown");
   const result = results.find((result) => result[0]?.label !== "unknown");
