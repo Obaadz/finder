@@ -11,6 +11,7 @@ import Randomstring from "randomstring";
 import { reportMissingPersonsrModel } from "../../../../DB/models/report_missing_persons.model.js";
 import slugify from "slugify";
 import { volunteerModel } from "../../../../DB/models/volunteer.model.js";
+import sharp from "sharp";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 async function LoadModels() {
@@ -169,12 +170,30 @@ export const addFoundPerson = asyncHandler(async (req, res, next) => {
   }
 });
 export const checkFaceMissingPerson = asyncHandler(async (req, res, next) => {
-  console.log(req.files);
   const File1 = req.files.File1.tempFilePath;
   if (!req.files.File1) return next(new Error("Please upload file."));
-  let result = await getDescriptorsFromDB(File1);
-  const searchKey = result[0].label;
-  if (searchKey == "unknown") return res.json({ success: false, result, missingData: "unknown" });
+
+  // get  3 rotates images files
+  const sharpImg = sharp(File1);
+  const otherFiles = await Promise.all([
+    sharpImg.rotate(90).toBuffer(),
+    sharpImg.rotate(180).toBuffer(),
+    sharpImg.rotate(270).toBuffer(),
+  ]);
+  let results = await Promise.all([
+    getDescriptorsFromDB(File1),
+    getDescriptorsFromDB(otherFiles[0]),
+    getDescriptorsFromDB(otherFiles[1]),
+    getDescriptorsFromDB(otherFiles[2]),
+  ]);
+  const searchKeys = results.map((result) => result[0]?._label);
+
+  if (searchKeys.every((key) => key === "unknown"))
+    return res.json({ success: false, result, missingData: "unknown" });
+
+  const searchKey = searchKeys.find((key) => key !== "unknown");
+  const result = results.find((result) => result[0]?._label !== "unknown");
+
   const reportMissing = await reportMissingPersonsrModel.findOne({
     labelFaceModel: searchKey,
   });
