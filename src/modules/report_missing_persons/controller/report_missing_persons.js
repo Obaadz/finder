@@ -63,7 +63,7 @@ async function getDescriptorsFromDB(image) {
   }
 
   // Load face matcher to find the matching face
-  const faceMatcher = new faceapi.FaceMatcher(faces, Number(process.env.PERCENTAGE || 0.75));
+  const faceMatcher = new faceapi.FaceMatcher(faces, Number(process.env.PERCENTAGE || 0.6));
 
   // Read the image using canvas or other method
   const img = await canvas.loadImage(image);
@@ -186,33 +186,42 @@ export const checkFaceMissingPerson = asyncHandler(async (req, res, next) => {
     getDescriptorsFromDB(otherFiles[1]),
     getDescriptorsFromDB(otherFiles[2]),
   ]);
-  const searchKeys = results.map((result) => result[0]?.label);
+  const searchKeys = results.map((result) => result[0]?.label).filter((label) => label);
   console.debug("RESULTS:", results);
   console.debug("SEARCH KEYS:", searchKeys);
   if (searchKeys.every((key) => key === "unknown"))
     return res.json({ success: false, result: results[0], missingData: "unknown" });
 
-  const searchKey = searchKeys.find((key) => key !== "unknown");
-  const result = results.find((result) => result[0]?.label !== "unknown");
+  const resultsWithoutUnknown = results.filter(
+    (result) => result.length && result[0]?.label !== "unknown"
+  );
 
-  console.log(searchKey);
-  console.log(result);
+  let maxResult = resultsWithoutUnknown[0];
+  console.log(resultsWithoutUnknown);
+  for (let i = 1; i < resultsWithoutUnknown.length; i++)
+    if (resultsWithoutUnknown[i][0].distance > maxResult[0].distance)
+      maxResult = resultsWithoutUnknown[i];
 
   const reportMissing = await reportMissingPersonsrModel.findOne({
-    labelFaceModel: searchKey,
+    labelFaceModel: maxResult[0].label,
   });
   if (reportMissing)
     return res.json({
       success: true,
-      result,
+      result: maxResult,
       keyRes: "missingPersons",
       missingData: reportMissing,
     });
   const reportFound = await volunteerModel.findOne({
-    labelFaceModel: searchKey,
+    labelFaceModel: maxResult[0].label,
   });
   if (reportFound)
-    return res.json({ success: true, result, keyRes: "foundPersons", foundData: reportFound });
+    return res.json({
+      success: true,
+      result: maxResult,
+      keyRes: "foundPersons",
+      foundData: reportFound,
+    });
 });
 export const getAllMissingPersons = asyncHandler(async (req, res, next) => {
   const { page } = req.query;
