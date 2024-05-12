@@ -112,18 +112,20 @@ export const addMissingFinder = asyncHandler(async (req, res, next) => {
     ...req.body,
   });
   const id = reportMiss._id;
-  console.log("LABEL ID", label, id);
 
-  console.log([File1, File2, File3]);
-
-  let result = await uploadLabeledImages([File1, File2, File3], label, id);
-  if (result) {
+  try {
+    let result = await uploadLabeledImages([File1, File2, File3], label, id);
+    if (result) {
+      return res.json({ success: true, message: "Face data stored successfully" });
+    } else {
+      return res.json({
+        success: false,
+        message: "Something went wrong, please try again.",
+      });
+    }
+  } catch (err) {
+    console.log("there is error");
     return res.json({ success: true, message: "Face data stored successfully" });
-  } else {
-    return res.json({
-      success: false,
-      message: "Something went wrong, please try again.",
-    });
   }
 });
 export const addFoundPerson = asyncHandler(async (req, res, next) => {
