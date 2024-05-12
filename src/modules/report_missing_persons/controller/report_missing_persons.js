@@ -47,7 +47,8 @@ async function uploadLabeledImages(images, label, id) {
     return true;
   } catch (error) {
     console.log(error);
-    return { ...error, try: true };
+    console.log("DESCRIPTOR ERROR");
+    return false;
   }
 }
 async function getDescriptorsFromDB(image) {
@@ -116,7 +117,7 @@ export const addMissingFinder = asyncHandler(async (req, res, next) => {
   try {
     let result = await uploadLabeledImages([File1, File2, File3], label, id);
 
-    if (typeof result == "object" && result.try) {
+    if (typeof result == "boolean" && result == false) {
       const sharpImg1 = sharp(File1);
       const sharpImg2 = sharp(File2);
       const sharpImg3 = sharp(File3);
