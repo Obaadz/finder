@@ -173,22 +173,18 @@ export const checkFaceMissingPerson = asyncHandler(async (req, res, next) => {
   const File1 = req.files.File1.tempFilePath;
   if (!req.files.File1) return next(new Error("Please upload file."));
 
-  // get  3 rotates images files
   const sharpImg = sharp(File1);
-  const otherFiles = await Promise.all([
-    sharpImg.rotate(90).toBuffer(),
-    sharpImg.rotate(180).toBuffer(),
-    sharpImg.rotate(270).toBuffer(),
-  ]);
+  const otherFiles = await Promise.all([sharpImg.rotate(-90).toBuffer()]);
   const results = await Promise.all([
     getDescriptorsFromDB(File1),
     getDescriptorsFromDB(otherFiles[0]),
-    getDescriptorsFromDB(otherFiles[1]),
-    getDescriptorsFromDB(otherFiles[2]),
   ]);
+
   const searchKeys = results.map((result) => result[0]?.label).filter((label) => label);
+
   console.debug("RESULTS:", results);
   console.debug("SEARCH KEYS:", searchKeys);
+
   if (searchKeys.every((key) => key === "unknown"))
     return res.json({ success: false, result: results[0], missingData: "unknown" });
 
@@ -197,7 +193,7 @@ export const checkFaceMissingPerson = asyncHandler(async (req, res, next) => {
   );
 
   let maxResult = resultsWithoutUnknown[0];
-  console.log(resultsWithoutUnknown);
+
   for (let i = 1; i < resultsWithoutUnknown.length; i++)
     if (resultsWithoutUnknown[i][0].distance > maxResult[0].distance)
       maxResult = resultsWithoutUnknown[i];
