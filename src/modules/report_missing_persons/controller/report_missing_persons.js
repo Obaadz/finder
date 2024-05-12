@@ -112,6 +112,9 @@ export const addMissingFinder = asyncHandler(async (req, res, next) => {
     ...req.body,
   });
   const id = reportMiss._id;
+  console.log("LABEL ID", label, id);
+
+  console.log([File1, File2, File3]);
 
   let result = await uploadLabeledImages([File1, File2, File3], label, id);
   if (result) {
@@ -173,17 +176,11 @@ export const checkFaceMissingPerson = asyncHandler(async (req, res, next) => {
   const File1 = req.files.File1.tempFilePath;
   if (!req.files.File1) return next(new Error("Please upload file."));
 
-  const randString = Randomstring.generate({
-    length: 3,
-    charset: "alphabetic",
-  });
-
   const sharpImg = sharp(File1);
-  await Promise.all([sharpImg.rotate(-90).jpeg().toFile(`./temp-${randString}.jpeg`)]);
-
+  const otherFiles = await Promise.all([sharpImg.rotate(-90).toBuffer()]);
   const results = await Promise.all([
     getDescriptorsFromDB(File1),
-    getDescriptorsFromDB(`./temp-${randString}.jpeg`),
+    getDescriptorsFromDB(otherFiles[0]),
   ]);
 
   const searchKeys = results.map((result) => result[0]?.label).filter((label) => label);
