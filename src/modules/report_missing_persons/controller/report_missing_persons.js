@@ -47,7 +47,7 @@ async function uploadLabeledImages(images, label, id) {
     return true;
   } catch (error) {
     console.log(error);
-    return error;
+    return { ...error, try: true };
   }
 }
 async function getDescriptorsFromDB(image) {
@@ -115,6 +115,21 @@ export const addMissingFinder = asyncHandler(async (req, res, next) => {
 
   try {
     let result = await uploadLabeledImages([File1, File2, File3], label, id);
+
+    if (typeof result == "object" && result.try) {
+      const sharpImg1 = sharp(File1);
+      const sharpImg2 = sharp(File2);
+      const sharpImg3 = sharp(File3);
+
+      arrOfFiles = await Promise.all([
+        sharpImg1.rotate(-90).toBuffer(),
+        sharpImg2.rotate(-90).toBuffer(),
+        sharpImg3.rotate(-90).toBuffer(),
+      ]);
+
+      result = await uploadLabeledImages([arrOfFiles[0], arrOfFiles[1], arrOfFiles[2]], label, id);
+    }
+
     if (result) {
       return res.json({ success: true, message: "Face data stored successfully" });
     } else {
