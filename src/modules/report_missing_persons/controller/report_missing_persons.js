@@ -173,11 +173,17 @@ export const checkFaceMissingPerson = asyncHandler(async (req, res, next) => {
   const File1 = req.files.File1.tempFilePath;
   if (!req.files.File1) return next(new Error("Please upload file."));
 
+  const randString = Randomstring.generate({
+    length: 3,
+    charset: "alphabetic",
+  });
+
   const sharpImg = sharp(File1);
-  const otherFiles = await Promise.all([sharpImg.rotate(-90).toBuffer()]);
+  await Promise.all([sharpImg.rotate(-90).jpeg().toFile(`./temp-${randString}.jpeg`)]);
+
   const results = await Promise.all([
     getDescriptorsFromDB(File1),
-    getDescriptorsFromDB(otherFiles[0]),
+    getDescriptorsFromDB(`./temp-${randString}.jpeg`),
   ]);
 
   const searchKeys = results.map((result) => result[0]?.label).filter((label) => label);
