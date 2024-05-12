@@ -122,7 +122,7 @@ export const addMissingFinder = asyncHandler(async (req, res, next) => {
       const sharpImg2 = sharp(File2);
       const sharpImg3 = sharp(File3);
 
-      arrOfFiles = await Promise.all([
+      const arrOfFiles = await Promise.all([
         sharpImg1.rotate(-90).toBuffer(),
         sharpImg2.rotate(-90).toBuffer(),
         sharpImg3.rotate(-90).toBuffer(),
